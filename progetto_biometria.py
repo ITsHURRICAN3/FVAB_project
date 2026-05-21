@@ -13,6 +13,8 @@ from catboost import CatBoostRegressor
 import glob
 import os
 
+
+# unione delle righe in "scoring" e "bio"
 scoring_files = sorted(glob.glob("scoring/*.csv"))
 dfs = []
 for sf in scoring_files:
@@ -29,23 +31,23 @@ for sf in scoring_files:
 df = pd.concat(dfs, ignore_index=True)
 
 # 2. PREPARAZIONE DELLA STORIA E DEL TARGET
-# Mappatura e rinomina colonne per mantenere compatibilità
+# rinomina delle colonne per mantenere coerenza con il dataset vecchio
 df['PLAYER'] = df['PLAYER_NAME']
 df['SEASON'] = df['_season']
 df['NAT'] = df['COUNTRY']
 df['HEIGHT'] = df['PLAYER_HEIGHT_INCHES'] * 2.54  # pollici in centimetri
 df['MPG'] = df['MIN']  # nei file NBA, MIN rappresenta già i minuti a partita
-df['PPG'] = df['PTS']  # nei file NBA, PTS rappresenta già i punti a partita
+df['PPG'] = df['PTS']  # e PTS rappresenta già i punti a partita
 df['TRB'] = df['REB']  # rimbalzi a partita
 df['FG%'] = df['FG_PCT']
 df['TS%'] = df['TS_PCT']
 df['USG%'] = df['USG_PCT']
 df['WIN_RATE'] = df['W_PCT']
 
-# --- AGGREGAZIONE GIOCATORI SCAMBIATI (TEAM_COUNT > 1) ---
-# Un giocatore scambiato a metà stagione genera più righe con statistiche parziali.
-# Aggreghiamo usando media ponderata per GP per le statistiche per-game
-# e somma per i contatori assoluti (GP, W, L).
+# AGGREGAZIONE GIOCATORI SCAMBIATI:
+# può accadere che un giocatore venga trasferito in una nuova squadra mid-season, il che comporta la creazione di più righe 
+# per lo stesso giocatore nella stessa season. Questa aggregazione serve a prendere i giocatori con più entry per la stessa season 
+# e riportare tutti i dati in una sola riga per season tramite somme e media ponderata
 agg_weighted = ['MPG', 'PPG', 'TRB', 'AST', 'FG%', 'TS%', 'USG%', 'WIN_RATE',
                 'NET_RATING', 'OREB_PCT', 'DREB_PCT', 'AST_PCT', 'AGE', 'HEIGHT']
 agg_sum = ['GP', 'W', 'L']
@@ -62,47 +64,25 @@ agg_dict.update({col: 'sum' for col in agg_sum})
 df = df.groupby(['PLAYER_ID', 'SEASON'], as_index=False).agg(agg_dict)
 df = df.sort_values(by=['PLAYER', 'SEASON']).reset_index(drop=True)
 
-# --- LAG FEATURES ---
-# Creazione della colonna target "NEXT_PPG" (i Punti a Partita che farà l'anno successivo)
+# LAG FEATURES:
+# creazione di uno "storico" di varie features per dare al modello una percezione del rendimento passato
 df['NEXT_PPG'] = df.groupby('PLAYER')['PPG'].shift(-1)
 
-# Lag-1 e lag-2 delle principali statistiche
-df['PREV_PPG']   = df.groupby('PLAYER')['PPG'].shift(1)
-df['PREV_PPG_2'] = df.groupby('PLAYER')['PPG'].shift(2)
-df['PREV_USG%']  = df.groupby('PLAYER')['USG%'].shift(1)
-df['PREV_GP']    = df.groupby('PLAYER')['GP'].shift(1)
+df['PREV_PPG']   = df.groupby('PLAYER')['PPG'].shift(1) # PPG della stagione passata
+df['PREV_PPG_2'] = df.groupby('PLAYER')['PPG'].shift(2) # PPG di due stagioni fa
+df['PREV_USG%']  = df.groupby('PLAYER')['USG%'].shift(1) # USG% della stagione passata
+df['PREV_GP']    = df.groupby('PLAYER')['GP'].shift(1)   # GP della stagione passata
 
-# Fillna con i valori attuali per le prime stagioni
+# fillna per risolvere il problema dei giocatori esordienti: per loro, vengono semplicemente clonati i valori
+# della stagione attuale
 df['PREV_PPG']   = df['PREV_PPG'].fillna(df['PPG'])
 df['PREV_PPG_2'] = df['PREV_PPG_2'].fillna(df['PREV_PPG'])
 df['PREV_USG%']  = df['PREV_USG%'].fillna(df['USG%'])
 df['PREV_GP']    = df['PREV_GP'].fillna(df['GP'])
 
-# Trend dei punti: quanto il giocatore è migliorato o peggiorato rispetto all'anno prima
-df['PPG_TREND'] = df['PPG'] - df['PREV_PPG']
-
-# --- ROLLING AVERAGES (Media Mobile 3 Stagioni) ---
-# Cattura la tendenza recente del giocatore meglio dei soli lag puntuali.
-# shift(1) evita il data leakage (non usiamo i dati della stagione corrente).
-df['PPG_ROLL3']   = df.groupby('PLAYER')['PPG'].transform(
-    lambda x: x.shift(1).rolling(3, min_periods=1).mean())
-df['USG_ROLL3']   = df.groupby('PLAYER')['USG%'].transform(
-    lambda x: x.shift(1).rolling(3, min_periods=1).mean())
-df['TS_ROLL3']    = df.groupby('PLAYER')['TS%'].transform(
-    lambda x: x.shift(1).rolling(3, min_periods=1).mean())
-df['NET_ROLL3']   = df.groupby('PLAYER')['NET_RATING'].transform(
-    lambda x: x.shift(1).rolling(3, min_periods=1).mean())
-
-# Fillna per i giocatori alla prima/seconda stagione
-roll3_source = {
-    'PPG_ROLL3': 'PPG', 'USG_ROLL3': 'USG%', 'TS_ROLL3': 'TS%', 'NET_ROLL3': 'NET_RATING'
-}
-for col, src in roll3_source.items():
-    df[col] = df[col].fillna(df[src])
-
-# --- MOMENTUM (Slope Lineare del PPG sulle Ultime 3 Stagioni) ---
-# Un giocatore con slope positiva sta crescendo; negativa sta calando.
-# Più informativo di una semplice differenza puntuale.
+# Slope lineare:
+# fornisce l'andamento del PPG sulle ultime 3 stagioni. Se è positivo, il giocatore sta migliorando, 
+# se è negativo, sta peggiorando.
 def compute_slope(series):
     """Calcola la pendenza di una regressione lineare sugli ultimi 3 valori (con shift per evitare leakage)."""
     s = series.shift(1)
@@ -120,24 +100,20 @@ def compute_slope(series):
 df['PPG_MOMENTUM'] = df.groupby('PLAYER')['PPG'].transform(compute_slope)
 df['PPG_MOMENTUM'] = df['PPG_MOMENTUM'].fillna(0.0)
 
-# --- STAGIONI CONSECUTIVE GIOCATE ---
-# Misura la continuità della carriera di un giocatore.
-# Un giocatore al 10° anno consecutivo è diverso da uno al 1°.
+# STAGIONI CONSECUTIVE GIOCATE:
+# misura la continuità della carriera di un giocatore. Un giocatore di 40 anni con 30 di esperienza gioca in modo diverso
+# da uno di 35 con 5 anni di esperienza
 df['CAREER_SEASON_NUM'] = df.groupby('PLAYER').cumcount() + 1
 
-# Rimozione delle righe il cui target futuro è sconosciuto (stagione 2024-25)
+# rimozione delle righe il cui target futuro è sconosciuto (per la predizione)
 df_pulito = df.dropna(subset=['NEXT_PPG'])
 
-# Filtro di pulizia (Dataset Cleaning)
-# Poiché MIN rappresenta i minuti a partita, calcoliamo i minuti totali come MIN * GP
+# DATASET CLEANING:
+# dopo aver calcolato i minuti totali, eliminiamo tutti i giocatori che hanno giocato meno di 2h o meno di 12 partite
 df_pulito = df_pulito.copy()
 df_pulito['TOTAL_MIN'] = df_pulito['MPG'] * df_pulito['GP']
 df_pulito = df_pulito[df_pulito['TOTAL_MIN'] >= 120]
 df_pulito = df_pulito[df_pulito['GP'] >= 12]
-
-# --- FEATURE ENGINEERING: Nuove variabili calcolate ---
-# GP_RATE: la percentuale di partite giocate in una stagione NBA di 82 partite
-df_pulito['GP_RATE'] = df_pulito['GP'] / 82
 
 # Peak Age Distance: distanza dall'età di picco atletico (27 anni)
 df_pulito['PEAK_AGE_DIST'] = abs(df_pulito['AGE'] - 27)
@@ -154,25 +130,23 @@ feature_cols = [
     "USG%", "NET_RATING",
     # Statistiche avanzate di rimbalzo e assist
     "OREB_PCT", "DREB_PCT", "AST_PCT",
-    # Features calcolate e contestuali (Lag)
-    "WIN_RATE", "PEAK_AGE_DIST", "GP_RATE",
-    "PREV_PPG", "PREV_PPG_2", "PPG_TREND", "PREV_USG%", "PREV_GP",
-    # Rolling averages (media mobile 3 stagioni)
-    "PPG_ROLL3", "USG_ROLL3", "TS_ROLL3", "NET_ROLL3",
+    # Features calcolate e contestuali (Lag) 
+    "WIN_RATE", "PEAK_AGE_DIST",
+    "PREV_PPG", "PREV_PPG_2",
+    "PREV_USG%", "PREV_GP",
     # Momentum e continuità di carriera
     "PPG_MOMENTUM", "CAREER_SEASON_NUM"
 ]
 
-# Rimuovi eventuali righe con feature mancanti (es. altezza non inserita)
+# rimozione di righe con features mancanti/celle vuote
 df_pulito = df_pulito.dropna(subset=feature_cols)
 
-# Esportazione del dataset per controllo
+# esportazione del dataset come csv per controlli
 df_pulito.to_csv("Dataset_Pulito_Pre_Addestramento.csv", index=False)
 print("-> File 'Dataset_Pulito_Pre_Addestramento.csv' generato con successo.\n")
 
 # 4. SUDDIVISIONE IN TRAIN E VALIDATION
-# Utilizziamo come validation set la stagione 2023-24 (l'ultima con target noto)
-# e come train set tutte le stagioni precedenti dal 1996-97 al 2022-23
+# tutte le stagioni fino alla 23-24 vengono usate per il traning, mentre 23-24 in coppia con 24-25 viene usata per il test 
 df_train = df_pulito[df_pulito['SEASON'] != '2023-24']
 X_train = df_train[feature_cols]
 y_train = df_train['NEXT_PPG']
@@ -183,8 +157,8 @@ y_val = df_val['NEXT_PPG']
 
 # 5. ADDESTRAMENTO E CONFRONTO DEI MODELLI
 
-# --- HYPERPARAMETER TUNING con GridSearchCV ---
-# Cerchiamo automaticamente i migliori parametri per i modelli più potenti
+# HYPERPARAMETER TUNING GridSearchCV
+# ricerca degli iperparametri opportuni tramite la libreria sopracitata
 print("Ricerca degli iperparametri ottimali in corso...")
 
 # Tuning Gradient Boosting
@@ -217,13 +191,13 @@ modelli = {
     "CatBoost": CatBoostRegressor(random_state=0, verbose=0)
 }
 
-# Scelta di un giocatore a caso per il test
+# scelta di un giocatore a caso per controlli a campione
 giocatori_validi = df_val['PLAYER'].unique()
 giocatore_scelto = np.random.choice(giocatori_validi)
 
-# Ciclo per addestrare e valutare i modelli
+# ciclo di addestramento dei modelli
 for nome_modello, modello in modelli.items():
-    # Addestramento
+    # addestramento
     modello.fit(X_train, y_train)
     
     # 6. VALIDAZIONE E CALCOLO DELLE METRICHE
@@ -233,7 +207,7 @@ for nome_modello, modello in modelli.items():
     rmse = np.sqrt(mse)
     r2 = r2_score(y_val, predizioni_val)
     
-    # Calcolo Accuracy in percentuale (basata su WMAPE)
+    # calcolo Accuracy in percentuale (basata su WMAPE)
     somma_errori = np.sum(np.abs(y_val - predizioni_val))
     somma_punti_reali = np.sum(y_val)
     accuracy_globale = 100 - ((somma_errori / somma_punti_reali) * 100) if somma_punti_reali > 0 else 0
