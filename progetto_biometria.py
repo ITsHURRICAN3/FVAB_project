@@ -5,7 +5,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import GridSearchCV
 import lightgbm as lgb
 from catboost import CatBoostRegressor
 
@@ -14,19 +13,28 @@ import glob
 import os
 
 
-# unione delle righe in "scoring" e "bio"
+# unione delle righe in "scoring", "bio" e "traditional"
 scoring_files = sorted(glob.glob("scoring/*.csv"))
 dfs = []
 for sf in scoring_files:
     bf = sf.replace("scoring\\nba_scoring_", "bio\\nba_bio_").replace("scoring/nba_scoring_", "bio/nba_bio_")
-    if os.path.exists(bf):
+    tf = sf.replace("scoring\\nba_scoring_", "traditional\\nba_traditional_").replace("scoring/nba_scoring_", "traditional/nba_traditional_")
+    if os.path.exists(bf) and os.path.exists(tf):
         s_df = pd.read_csv(sf)
         b_df = pd.read_csv(bf)
+        t_df = pd.read_csv(tf)
+        
+        # Merge di scoring e bio
         common_cols = list(set(s_df.columns).intersection(b_df.columns))
         merged = pd.merge(s_df, b_df, on=common_cols)
+        
+        # Merge con traditional (estrazione di STL e BLK per evitare conflitti)
+        t_df_subset = t_df[['PLAYER_ID', '_season', 'TEAM_ID', 'STL', 'BLK']]
+        merged = pd.merge(merged, t_df_subset, on=['PLAYER_ID', '_season', 'TEAM_ID'], how='inner')
+        
         dfs.append(merged)
     else:
-        print(f"Warning: file bio non trovato per {sf}")
+        print(f"Warning: file bio o traditional non trovato per {sf}")
 
 df = pd.concat(dfs, ignore_index=True)
 
@@ -49,7 +57,8 @@ df['WIN_RATE'] = df['W_PCT']
 # per lo stesso giocatore nella stessa season. Questa aggregazione serve a prendere i giocatori con più entry per la stessa season 
 # e riportare tutti i dati in una sola riga per season tramite somme e media ponderata
 agg_weighted = ['MPG', 'PPG', 'TRB', 'AST', 'FG%', 'TS%', 'USG%', 'WIN_RATE',
-                'NET_RATING', 'OREB_PCT', 'DREB_PCT', 'AST_PCT', 'AGE', 'HEIGHT']
+                'NET_RATING', 'OREB_PCT', 'DREB_PCT', 'AST_PCT', 'AGE', 'HEIGHT',
+                'STL', 'BLK']
 agg_sum = ['GP', 'W', 'L']
 agg_first = ['PLAYER', 'SEASON', 'NAT']
 
@@ -67,6 +76,7 @@ df = df.sort_values(by=['PLAYER', 'SEASON']).reset_index(drop=True)
 # LAG FEATURES:
 # creazione di uno "storico" di varie features per dare al modello una percezione del rendimento passato
 df['NEXT_PPG'] = df.groupby('PLAYER')['PPG'].shift(-1)
+df['NEXT_GP']  = df.groupby('PLAYER')['GP'].shift(-1)  # partite giocate nella stagione successiva
 
 df['PREV_PPG']   = df.groupby('PLAYER')['PPG'].shift(1) # PPG della stagione passata
 df['PREV_PPG_2'] = df.groupby('PLAYER')['PPG'].shift(2) # PPG di due stagioni fa
@@ -114,6 +124,7 @@ df_pulito = df_pulito.copy()
 df_pulito['TOTAL_MIN'] = df_pulito['MPG'] * df_pulito['GP']
 df_pulito = df_pulito[df_pulito['TOTAL_MIN'] >= 120]
 df_pulito = df_pulito[df_pulito['GP'] >= 12]
+df_pulito = df_pulito[df_pulito['NEXT_GP'] >= 20]  # rimuove i giocatori infortunati nella stagione successiva (< 20 partite)
 
 # Peak Age Distance: distanza dall'età di picco atletico (27 anni)
 df_pulito['PEAK_AGE_DIST'] = abs(df_pulito['AGE'] - 27)
@@ -123,7 +134,7 @@ feature_cols = [
     # Variabili base
     "AGE", "HEIGHT", "MPG", "PPG", "GP", "W",
     # Statistiche di gioco
-    "TRB", "AST",
+    "TRB", "AST", "STL", "BLK",
     # Percentuali di tiro
     "FG%", "TS%",
     # Statistiche avanzate
@@ -157,37 +168,16 @@ y_val = df_val['NEXT_PPG']
 
 # 5. ADDESTRAMENTO E CONFRONTO DEI MODELLI
 
-# HYPERPARAMETER TUNING GridSearchCV
-# ricerca degli iperparametri opportuni tramite la libreria sopracitata
-print("Ricerca degli iperparametri ottimali in corso...")
-
-# Tuning Gradient Boosting
-param_grid_gb = {
-    'n_estimators': [100, 150, 200],
-    'learning_rate': [0.03, 0.05, 0.1],
-    'max_depth': [3, 4, 5]
-}
-gs_gb = GridSearchCV(GradientBoostingRegressor(random_state=0), param_grid_gb, cv=3, scoring='r2', n_jobs=-1)
-gs_gb.fit(X_train, y_train)
-print(f"  -> Gradient Boosting best params: {gs_gb.best_params_} (R² cv: {gs_gb.best_score_:.3f})")
-
-# Tuning LightGBM
-param_grid_lgb = {
-    'n_estimators': [100, 200, 300],
-    'learning_rate': [0.03, 0.05, 0.1],
-    'max_depth': [3, 4, 5],
-    'num_leaves': [20, 31, 50]
-}
-gs_lgb = GridSearchCV(lgb.LGBMRegressor(random_state=0, verbose=-1), param_grid_lgb, cv=3, scoring='r2', n_jobs=-1)
-gs_lgb.fit(X_train, y_train)
-print(f"  -> LightGBM best params: {gs_lgb.best_params_} (R² cv: {gs_lgb.best_score_:.3f})")
-print()
-
+# MODELLI CON IPERPARAMETRI OTTENUTI TRAMITE TUNING PRECEDENTE (Rimosso GridSearchCV per velocizzare)
 modelli = {
     "Regressione Lineare": make_pipeline(StandardScaler(), LinearRegression()),
     "Random Forest": RandomForestRegressor(random_state=42),
-    "Gradient Boosting (Tuned)": gs_gb.best_estimator_,
-    "LightGBM (Tuned)": gs_lgb.best_estimator_,
+    "Gradient Boosting (Tuned)": GradientBoostingRegressor(
+        n_estimators=200, learning_rate=0.03, max_depth=4, random_state=0
+    ),
+    "LightGBM (Tuned)": lgb.LGBMRegressor(
+        n_estimators=300, learning_rate=0.03, max_depth=3, num_leaves=20, random_state=0, verbose=-1
+    ),
     "CatBoost": CatBoostRegressor(random_state=0, verbose=0)
 }
 
