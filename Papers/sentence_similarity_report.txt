@@ -1,0 +1,24 @@
+SENTENCE-LEVEL SIMILARITY & PARAPHRASE REPORT
+=============================================
+
+Target: Paper.tex
+Sources: Paper FVAB 1-4 PDFs
+Filters: Only comparing sentences with >= 6 words, excluding bibliography.
+Thresholds: Jaccard > 0.40 and SequenceMatcher Ratio > 0.50
+
+Found 2 matching sentence pairs:
+
+Match #1 [HEAVY PARAPHRASE]
+  Similarity: Jaccard = 0.64, Sequence Matcher = 0.77
+  Source:     Paper FVAB 4.pdf (Sentence #13)
+  Paper.tex:  "A study published in MDPI Applied Sciences~ developed a supervised machine learning framework to predict EuroLeague basketball game outcomes using team-level statistics."
+  Source PDF: "This study applied a supervised machine learning (ML) framework to predict EuroLeague game outcomes using team-level game-related statistics."
+--------------------------------------------------------------------------------
+
+Match #2 [HEAVY PARAPHRASE]
+  Similarity: Jaccard = 0.59, Sequence Matcher = 0.73
+  Source:     Paper FVAB 4.pdf (Sentence #267)
+  Paper.tex:  "A study published in MDPI Applied Sciences~ developed a supervised machine learning framework to predict EuroLeague basketball game outcomes using team-level statistics."
+  Source PDF: "Conclusions This study applied a comprehensive, explainable machine learning framework to predict EuroLeague basketball game outcomes using team-level game-related statistics."
+--------------------------------------------------------------------------------
+

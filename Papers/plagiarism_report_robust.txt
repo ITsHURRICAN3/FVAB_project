@@ -1,0 +1,235 @@
+ROBUST N-GRAM PLAGIARISM ANALYSIS REPORT
+========================================
+
+Target: Paper.tex (3442 words analyzed)
+Sources: Paper FVAB 1-4 PDFs
+N-gram size threshold: 5 words
+
+Detected 37 matching segments of 5 or more words:
+
+Match #1 [Length: 5 words]
+Source: Paper FVAB 1.pdf
+Paper.tex: "the application of machine learning"
+Source Context: "... www tandfonline com journals tjit20 **The** **application** **of** **machine** **learning** and deep learning in sport ..."
+--------------------------------------------------------------------------------
+
+Match #2 [Length: 6 words]
+Source: Paper FVAB 3.pdf
+Paper.tex: "the application of machine learning to"
+Source Context: "... of this research delved into **the** **application** **of** **machine** **learning** **to** predict team efficiency based on ..."
+--------------------------------------------------------------------------------
+
+Match #3 [Length: 5 words]
+Source: Paper FVAB 4.pdf
+Paper.tex: "a supervised machine learning framework"
+Source Context: "... or player specific influences Using **a** **supervised** **machine** **learning** **framework** with four classifiers LR SVM ..."
+--------------------------------------------------------------------------------
+
+Match #4 [Length: 5 words]
+Source: Paper FVAB 1.pdf
+Paper.tex: "Root Mean Squared Error RMSE"
+Source Context: "... compare our ML algorithms 1 **Root** **Mean** **Squared** **Error** **RMSE** and Mean Absolute Error MAE ..."
+--------------------------------------------------------------------------------
+
+Match #5 [Length: 5 words]
+Source: Paper FVAB 3.pdf
+Paper.tex: "Root Mean Squared Error RMSE"
+Source Context: "... Mean Squared Error MSE and **Root** **Mean** **Squared** **Error** **RMSE** serve as fundamental indicators of ..."
+--------------------------------------------------------------------------------
+
+Match #6 [Length: 5 words]
+Source: Paper FVAB 3.pdf
+Paper.tex: "sports analytics has become a"
+Source Context: "... performance Basketball analytics or any **sports** **analytics** **has** **become** **a** crucial topic in the area ..."
+--------------------------------------------------------------------------------
+
+Match #7 [Length: 5 words]
+Source: Paper FVAB 2.pdf
+Paper.tex: "The National Basketball Association NBA"
+Source Context: "... available for games played in **the** **National** **Basketball** **Association** **NBA** for evaluating the models and ..."
+--------------------------------------------------------------------------------
+
+Match #8 [Length: 6 words]
+Source: Paper FVAB 2.pdf
+Paper.tex: "is to predict a player s"
+Source Context: "... The intuition behind our work **is** **to** **predict** **a** **player** **s** score in an upcoming game ..."
+--------------------------------------------------------------------------------
+
+Match #9 [Length: 6 words]
+Source: Paper FVAB 3.pdf
+Paper.tex: "and Root Mean Squared Error RMSE"
+Source Context: "... MAE Mean Squared Error MSE **and** **Root** **Mean** **Squared** **Error** **RMSE** serve as fundamental indicators of ..."
+--------------------------------------------------------------------------------
+
+Match #10 [Length: 5 words]
+Source: Paper FVAB 1.pdf
+Paper.tex: "Root Mean Squared Error RMSE"
+Source Context: "... compare our ML algorithms 1 **Root** **Mean** **Squared** **Error** **RMSE** and Mean Absolute Error MAE ..."
+--------------------------------------------------------------------------------
+
+Match #11 [Length: 6 words]
+Source: Paper FVAB 2.pdf
+Paper.tex: "paper is structured as follows Section"
+Source Context: "... games The rest of the **paper** **is** **structured** **as** **follows** **Section** 2 introduces the individual and ..."
+--------------------------------------------------------------------------------
+
+Match #12 [Length: 5 words]
+Source: Paper FVAB 4.pdf
+Paper.tex: "State of the Art and"
+Source Context: "... Machine Learning A Brief History **State** **of** **the** **Art** **and** Challenges In ECML PKDD 2020 ..."
+--------------------------------------------------------------------------------
+
+Match #13 [Length: 6 words]
+Source: Paper FVAB 2.pdf
+Paper.tex: "on machine learning applications in sports"
+Source Context: "... systematic review of 72 studies **on** **machine** **learning** **applications** **in** **sports** found a significant shift from ..."
+--------------------------------------------------------------------------------
+
+Match #14 [Length: 5 words]
+Source: Paper FVAB 4.pdf
+Paper.tex: "State of the Art and"
+Source Context: "... Machine Learning A Brief History **State** **of** **the** **Art** **and** Challenges In ECML PKDD 2020 ..."
+--------------------------------------------------------------------------------
+
+Match #15 [Length: 5 words]
+Source: Paper FVAB 1.pdf
+Paper.tex: "The application of data mining"
+Source Context: "... in a variety of sports **The** **application** **of** **data** **mining** in basketball was started in ..."
+--------------------------------------------------------------------------------
+
+Match #16 [Length: 5 words]
+Source: Paper FVAB 4.pdf
+Paper.tex: "a supervised machine learning framework"
+Source Context: "... or player specific influences Using **a** **supervised** **machine** **learning** **framework** with four classifiers LR SVM ..."
+--------------------------------------------------------------------------------
+
+Match #17 [Length: 9 words]
+Source: Paper FVAB 4.pdf
+Paper.tex: "to predict EuroLeague basketball game outcomes using team level"
+Source Context: "... comprehensive explainable machine learning framework **to** **predict** **EuroLeague** **basketball** **game** **outcomes** **using** **team** **level** game related statistics Among four ..."
+--------------------------------------------------------------------------------
+
+Match #18 [Length: 7 words]
+Source: Paper FVAB 3.pdf
+Paper.tex: "Random Forest Decision Tree and Linear Regression"
+Source Context: "... The algorithms used here are **random** **forest** **decision** **tree** **and** **linear** **regression** which provide interpretability and predictive ..."
+--------------------------------------------------------------------------------
+
+Match #19 [Length: 8 words]
+Source: Paper FVAB 2.pdf
+Paper.tex: "predicting the number of points scored by a"
+Source Context: "... player statistics focusing specifically on **predicting** **the** **number** **of** **points** **scored** **by** **a** player at a given game ..."
+--------------------------------------------------------------------------------
+
+Match #20 [Length: 5 words]
+Source: Paper FVAB 2.pdf
+Paper.tex: "Linear Regression Neural Networks Decision"
+Source Context: "... used four machine learning models **linear** **regression** **neural** **networks** **decision** tree regressors and random forest ..."
+--------------------------------------------------------------------------------
+
+Match #21 [Length: 8 words]
+Source: Paper FVAB 1.pdf
+Paper.tex: "the application of machine learning and deep learning"
+Source Context: "... www tandfonline com journals tjit20 **The** **application** **of** **machine** **learning** **and** **deep** **learning** in sport predicting NBA players ..."
+--------------------------------------------------------------------------------
+
+Match #22 [Length: 5 words]
+Source: Paper FVAB 3.pdf
+Paper.tex: "the application of machine learning"
+Source Context: "... of this research delved into **the** **application** **of** **machine** **learning** to predict team efficiency based ..."
+--------------------------------------------------------------------------------
+
+Match #23 [Length: 5 words]
+Source: Paper FVAB 2.pdf
+Paper.tex: "per game points per game"
+Source Context: "... steals made by the player **per** **game** **Points** **per** **game** The target variable representing the ..."
+--------------------------------------------------------------------------------
+
+Match #24 [Length: 5 words]
+Source: Paper FVAB 4.pdf
+Paper.tex: "the 2024 25 season The"
+Source Context: "... using game related statistics from **the** **2024** **25** **season** **The** study seeks to answer two ..."
+--------------------------------------------------------------------------------
+
+Match #25 [Length: 5 words]
+Source: Paper FVAB 2.pdf
+Paper.tex: "An ensemble of decision trees"
+Source Context: "... gradient boosting Random forests are **an** **ensemble** **of** **decision** **trees** and reduces overfitting which can ..."
+--------------------------------------------------------------------------------
+
+Match #26 [Length: 5 words]
+Source: Paper FVAB 2.pdf
+Paper.tex: "player statistics from the 2023"
+Source Context: "... this study consists of comprehensive **player** **statistics** **from** **the** **2023** 2024 NBA season9 The National ..."
+--------------------------------------------------------------------------------
+
+Match #27 [Length: 5 words]
+Source: Paper FVAB 1.pdf
+Paper.tex: "Root Mean Squared Error RMSE"
+Source Context: "... compare our ML algorithms 1 **Root** **Mean** **Squared** **Error** **RMSE** and Mean Absolute Error MAE ..."
+--------------------------------------------------------------------------------
+
+Match #28 [Length: 5 words]
+Source: Paper FVAB 3.pdf
+Paper.tex: "Root Mean Squared Error RMSE"
+Source Context: "... Mean Squared Error MSE and **Root** **Mean** **Squared** **Error** **RMSE** serve as fundamental indicators of ..."
+--------------------------------------------------------------------------------
+
+Match #29 [Length: 5 words]
+Source: Paper FVAB 4.pdf
+Paper.tex: "a supervised machine learning framework"
+Source Context: "... or player specific influences Using **a** **supervised** **machine** **learning** **framework** with four classifiers LR SVM ..."
+--------------------------------------------------------------------------------
+
+Match #30 [Length: 21 words]
+Source: Paper FVAB 1.pdf
+Paper.tex: "The application of machine learning and deep learning in sport predicting NBA players performance and popularity Journal of Information and Telecommunication"
+Source Context: "... Bingkun Ma Jiang Hu 2022 **The** **application** **of** **machine** **learning** **and** **deep** **learning** **in** **sport** **predicting** **NBA** **players** **performance** **and** **popularity** **Journal** **of** **Information** **and** **Telecommunication** 6 2 217 235 DOI ..."
+--------------------------------------------------------------------------------
+
+Match #31 [Length: 5 words]
+Source: Paper FVAB 3.pdf
+Paper.tex: "The application of machine learning"
+Source Context: "... of this research delved into **the** **application** **of** **machine** **learning** to predict team efficiency based ..."
+--------------------------------------------------------------------------------
+
+Match #32 [Length: 6 words]
+Source: Paper FVAB 1.pdf
+Paper.tex: "DOI 10 1080 24751839 2021 1977066"
+Source Context: "... Telecommunication 6 2 217 235 **DOI** **10** **1080** **24751839** **2021** **1977066** To link to this article ..."
+--------------------------------------------------------------------------------
+
+Match #33 [Length: 8 words]
+Source: Paper FVAB 2.pdf
+Paper.tex: "Leveraging Machine Learning for Predicting NBA Player Performance"
+Source Context: "... **Leveraging** **Machine** **Learning** **for** **Predicting** **NBA** **Player** **Performance** Anurag Chakrabarti Received F ebruary ..."
+--------------------------------------------------------------------------------
+
+Match #34 [Length: 7 words]
+Source: Paper FVAB 2.pdf
+Paper.tex: "National High School Journal of Science 2025"
+Source Context: "... have specific attributes such The **National** **High** **School** **Journal** **of** **Science** **2025** NHSJS Reports 1 as points ..."
+--------------------------------------------------------------------------------
+
+Match #35 [Length: 13 words]
+Source: Paper FVAB 4.pdf
+Paper.tex: "From Data to Decisions Using Explainable Machine Learning to Predict EuroLeague Basketball Outcomes"
+Source Context: "... P Balampanos D et al **From** **Data** **to** **Decisions** **Using** **Explainable** **Machine** **Learning** **to** **Predict** **EuroLeague** **Basketball** **Outcomes** Appl Sci 2025 15 12401 ..."
+--------------------------------------------------------------------------------
+
+Match #36 [Length: 11 words]
+Source: Paper FVAB 3.pdf
+Paper.tex: "Basketball Performance Prediction Models and Team Efficiency Factors MSc Research Project"
+Source Context: "... **Basketball** **Performance** **Prediction** **Models** **and** **Team** **Efficiency** **Factors** **MSc** **Research** **Project** Data Analytics Karthik Nousher Student ..."
+--------------------------------------------------------------------------------
+
+Match #37 [Length: 7 words]
+Source: Paper FVAB 3.pdf
+Paper.tex: "School of Computing National College of Ireland"
+Source Context: "... Karthik Nousher Student ID 22138668 **School** **of** **Computing** **National** **College** **of** **Ireland** Supervisor Dr Catherine Mulwa www ..."
+--------------------------------------------------------------------------------
+
+SUMMARY STATISTICS
+------------------
+Total matching sequences found: 37
+Total overlapping words: 240 out of 3442 (6.97%)
