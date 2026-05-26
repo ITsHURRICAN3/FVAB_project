@@ -39,7 +39,7 @@ for sf in scoring_files:
 df = pd.concat(dfs, ignore_index=True)
 
 # 2. PREPARAZIONE DELLA STORIA E DEL TARGET
-# rinomina delle colonne per mantenere coerenza con il dataset vecchio
+# rinomina delle colonne per mantenere coerenza con le nomenclature standard
 df['PLAYER'] = df['PLAYER_NAME']
 df['SEASON'] = df['_season']
 df['NAT'] = df['COUNTRY']
@@ -181,9 +181,7 @@ modelli = {
     "CatBoost": CatBoostRegressor(random_state=0, verbose=0)
 }
 
-# scelta di un giocatore a caso per controlli a campione
-giocatori_validi = df_val['PLAYER'].unique()
-giocatore_scelto = np.random.choice(giocatori_validi)
+
 
 # ciclo di addestramento dei modelli
 for nome_modello, modello in modelli.items():
@@ -211,17 +209,7 @@ for nome_modello, modello in modelli.items():
     print(f"R-quadro (Precisione R²):     {r2:.3f} ({(r2*100):.1f}%)")
     print(f"Accuracy Globale:             {accuracy_globale:.1f}%\n")
     
-    # 7. FOCUS SU UN GIOCATORE CASUALE
-    giocatore_val = df_val[df_val["PLAYER"] == giocatore_scelto]
-    if not giocatore_val.empty:
-        X_giocatore = giocatore_val[feature_cols]
-        y_reale = giocatore_val['NEXT_PPG'].values[0]
-        predizione = modello.predict(X_giocatore)[0]
-        errore_singolo = abs(predizione - y_reale)
-        acc_singola = max(0, 100 - (errore_singolo / y_reale * 100)) if y_reale > 0 else 0
-        print(f"--- TEST SU {giocatore_scelto.upper()} ---")
-        print(f"Previsto: {predizione:.1f} PPG | Reale: {y_reale:.1f} PPG")
-        print(f"Errore: {errore_singolo:.1f} punti a partita (Accuracy Specifica: {acc_singola:.1f}%)")
+
 
     # 8. ESPORTAZIONE PREDIZIONI IN CSV
     df_risultati = df_val[['PLAYER', 'SEASON']].copy()
