@@ -80,10 +80,10 @@ df['WIN_RATE'] = df['W_PCT']
 # per lo stesso giocatore nella stessa season. Questa aggregazione serve a prendere i giocatori con più entry per la stessa season 
 # e riportare tutti i dati in una sola riga per season tramite somme e media ponderata
 agg_weighted = ['MPG', 'PPG', 'TRB', 'AST', 'FG%', 'TS%', 'USG%', 'WIN_RATE',
-                'NET_RATING', 'OREB_PCT', 'DREB_PCT', 'AST_PCT', 'AGE', 'HEIGHT',
+                'NET_RATING', 'OREB_PCT', 'DREB_PCT', 'AST_PCT', 'AGE',
                 'STL', 'BLK']
 agg_sum = ['GP', 'W', 'L']
-agg_first = ['PLAYER', 'SEASON', 'NAT']
+agg_first = ['PLAYER', 'SEASON', 'NAT', 'HEIGHT']
 
 def wavg(col):
     # Restituisce una funzione di media ponderata per GP
@@ -200,6 +200,9 @@ modelli = {
     "CatBoost": CatBoostRegressor(random_state=0, verbose=0)
 }
 
+
+std_target = np.std(y_val)
+
 # ciclo di addestramento dei modelli
 for nome_modello, modello in modelli.items():
     # addestramento
@@ -216,8 +219,7 @@ for nome_modello, modello in modelli.items():
     somma_errori = np.sum(np.abs(y_val - predizioni_val))
     somma_punti_reali = np.sum(y_val)
     accuracy_globale = 100 - ((somma_errori / somma_punti_reali) * 100) if somma_punti_reali > 0 else 0
-    
-    std_target = np.std(y_val)
+
     
     print(f"=== PAGELLE GLOBALI: {nome_modello.upper()} ===")
     print(f"Deviazione Std Target:        {std_target:.2f} punti a partita")
@@ -229,9 +231,7 @@ for nome_modello, modello in modelli.items():
 
 
     # 8. ESPORTAZIONE PREDIZIONI IN CSV
-    df_risultati = df_val[['PLAYER', 'SEASON']].copy()
-    for col in feature_cols:
-        df_risultati[col] = X_val[col]
+    df_risultati = pd.concat([df_val[['PLAYER', 'SEASON']], X_val], axis=1).copy()
     df_risultati['REALE_NEXT_PPG'] = y_val
     df_risultati['PREDIZIONE'] = np.round(predizioni_val, 1)
     
