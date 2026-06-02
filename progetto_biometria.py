@@ -61,7 +61,7 @@ if not dfs:
 
 df = pd.concat(dfs, ignore_index=True)
 
-# 2. PREPARAZIONE DELLA STORIA E DEL TARGET
+# 2. PREPARAZIONE DELLO STORICO E DEL TARGET
 # rinomina delle colonne per mantenere coerenza con le nomenclature standard
 df['PLAYER'] = df['PLAYER_NAME']
 df['SEASON'] = df['_season']
@@ -86,7 +86,7 @@ agg_sum = ['GP', 'W', 'L']
 agg_first = ['PLAYER', 'SEASON', 'NAT']
 
 def wavg(col):
-    """Restituisce una funzione di media ponderata per GP."""
+    # Restituisce una funzione di media ponderata per GP
     return lambda x: np.average(x, weights=df.loc[x.index, 'GP'])
 
 agg_dict = {col: 'first' for col in agg_first}
@@ -175,10 +175,6 @@ feature_cols = [
 # rimozione di righe con features mancanti/celle vuote
 df_pulito = df_pulito.dropna(subset=feature_cols)
 
-# esportazione del dataset come csv per controlli
-df_pulito.to_csv("Dataset_Pulito_Pre_Addestramento.csv", index=False)
-print("-> File 'Dataset_Pulito_Pre_Addestramento.csv' generato con successo.\n")
-
 # 4. SUDDIVISIONE IN TRAIN E VALIDATION
 # tutte le stagioni fino alla 23-24 vengono usate per il traning, mentre 23-24 in coppia con 24-25 viene usata per il test 
 df_train = df_pulito[df_pulito['SEASON'] != '2023-24']
@@ -191,7 +187,7 @@ y_val = df_val['NEXT_PPG']
 
 # 5. ADDESTRAMENTO E CONFRONTO DEI MODELLI
 
-# MODELLI CON IPERPARAMETRI OTTENUTI TRAMITE TUNING PRECEDENTE (Rimosso GridSearchCV per velocizzare)
+# MODELLI CON IPERPARAMETRI OTTENUTI TRAMITE TUNING PRECEDENTE
 modelli = {
     "Regressione Lineare": make_pipeline(StandardScaler(), LinearRegression()),
     "Random Forest": RandomForestRegressor(random_state=42),
