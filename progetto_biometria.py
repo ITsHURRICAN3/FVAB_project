@@ -14,27 +14,50 @@ import os
 
 
 # unione delle righe in "scoring", "bio" e "traditional"
-scoring_files = sorted(glob.glob("scoring/*.csv"))
+scoring_files = sorted(glob.glob(os.path.join("scoring", "*.csv")))
 dfs = []
 for sf in scoring_files:
-    bf = sf.replace("scoring\\nba_scoring_", "bio\\nba_bio_").replace("scoring/nba_scoring_", "bio/nba_bio_")
-    tf = sf.replace("scoring\\nba_scoring_", "traditional\\nba_traditional_").replace("scoring/nba_scoring_", "traditional/nba_traditional_")
+    # Estrazione del nome file base per ricostruire i percorsi corrispondenti
+    base_name = os.path.basename(sf)
+    
+    # I file bio iniziano con nba_bio_ invece di nba_scoring_
+    bio_name = base_name.replace("nba_scoring_", "nba_bio_")
+    # I file traditional iniziano con nba_traditional_ invece di nba_scoring_
+    trad_name = base_name.replace("nba_scoring_", "nba_traditional_")
+    
+    bf = os.path.join("bio", bio_name)
+    tf = os.path.join("traditional", trad_name)
+    
     if os.path.exists(bf) and os.path.exists(tf):
-        s_df = pd.read_csv(sf)
-        b_df = pd.read_csv(bf)
-        t_df = pd.read_csv(tf)
-        
-        # Merge di scoring e bio
-        common_cols = list(set(s_df.columns).intersection(b_df.columns))
-        merged = pd.merge(s_df, b_df, on=common_cols)
-        
-        # Merge con traditional (estrazione di STL e BLK per evitare conflitti)
-        t_df_subset = t_df[['PLAYER_ID', '_season', 'TEAM_ID', 'STL', 'BLK']]
-        merged = pd.merge(merged, t_df_subset, on=['PLAYER_ID', '_season', 'TEAM_ID'], how='inner')
-        
-        dfs.append(merged)
+        try:
+            s_df = pd.read_csv(sf)
+            b_df = pd.read_csv(bf)
+            t_df = pd.read_csv(tf)
+            
+            # Merge di scoring e bio. Identifichiamo le colonne comuni per il merge.
+            common_cols = list(set(s_df.columns).intersection(b_df.columns))
+            merged = pd.merge(s_df, b_df, on=common_cols)
+            
+            # Merge con traditional (estrazione di STL e BLK per evitare conflitti)
+            # Assicuriamoci che le colonne necessarie esistano
+            needed_cols = ['PLAYER_ID', '_season', 'TEAM_ID', 'STL', 'BLK']
+            if all(col in t_df.columns for col in needed_cols):
+                t_df_subset = t_df[needed_cols]
+                merged = pd.merge(merged, t_df_subset, on=['PLAYER_ID', '_season', 'TEAM_ID'], how='inner')
+                dfs.append(merged)
+            else:
+                print(f"Warning: Colonne mancanti in {tf}")
+        except Exception as e:
+            print(f"Error processando {sf}: {e}")
     else:
-        print(f"Warning: file bio o traditional non trovato per {sf}")
+        if not os.path.exists(bf):
+            print(f"Warning: file bio non trovato: {bf}")
+        if not os.path.exists(tf):
+            print(f"Warning: file traditional non trovato: {tf}")
+
+if not dfs:
+    print("Errore: Nessun dato caricato. Verifica i percorsi e i file CSV.")
+    exit(1)
 
 df = pd.concat(dfs, ignore_index=True)
 
@@ -76,7 +99,7 @@ df = df.sort_values(by=['PLAYER', 'SEASON']).reset_index(drop=True)
 # LAG FEATURES:
 # creazione di uno "storico" di varie features per dare al modello una percezione del rendimento passato
 df['NEXT_PPG'] = df.groupby('PLAYER')['PPG'].shift(-1)
-df['NEXT_GP']  = df.groupby('PLAYER')['GP'].shift(-1)  # partite giocate nella stagione successiva
+df['NEXT_GP']  = df.groupby('PLAYER')['GP'].shift(-1)  # partite giocate nella stagione successiva (per filtrare)
 
 df['PREV_PPG']   = df.groupby('PLAYER')['PPG'].shift(1) # PPG della stagione passata
 df['PREV_PPG_2'] = df.groupby('PLAYER')['PPG'].shift(2) # PPG di due stagioni fa
@@ -124,7 +147,7 @@ df_pulito = df_pulito.copy()
 df_pulito['TOTAL_MIN'] = df_pulito['MPG'] * df_pulito['GP']
 df_pulito = df_pulito[df_pulito['TOTAL_MIN'] >= 120]
 df_pulito = df_pulito[df_pulito['GP'] >= 12]
-df_pulito = df_pulito[df_pulito['NEXT_GP'] >= 20]  # rimuove i giocatori infortunati nella stagione successiva (< 20 partite)
+df_pulito = df_pulito[df_pulito['NEXT_GP'] >= 20]  # rimuove i giocatori "possibilmente infortunati" nella stagione successiva (< 20 partite)
 
 # Peak Age Distance: distanza dall'età di picco atletico (27 anni)
 df_pulito['PEAK_AGE_DIST'] = abs(df_pulito['AGE'] - 27)
@@ -180,8 +203,6 @@ modelli = {
     ),
     "CatBoost": CatBoostRegressor(random_state=0, verbose=0)
 }
-
-
 
 # ciclo di addestramento dei modelli
 for nome_modello, modello in modelli.items():

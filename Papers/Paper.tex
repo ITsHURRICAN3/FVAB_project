@@ -45,7 +45,7 @@ v.goffredo@studenti.unisa.it
 % -------------------------------------------------
 \section{Abstract}
 
-In recent years, sports analytics has undergone a major revolution driven by the application of machine learning to optimize decision-making for coaches, scouts, and front offices. While the literature has heavily focused on team-level game outcome prediction or collective efficiency, accurately forecasting individual player trajectories on a seasonal scale remains a complex challenge. This short paper introduces a supervised machine learning framework to predict future offensive productivity—expressed as points per game (PPG) in the subsequent season—for National Basketball Association (NBA) players. The proposed dataset integrates biometric and anthropometric features (age, height, distance from the estimated athletic peak age of 27) with traditional in-game statistics, advanced metrics (e.g., True Shooting Percentage, Usage Rate, Net Rating), and historical career trends (lag features, a 3-season PPG slope, and career longevity). We implemented and compared several regression models: Linear Regression, Random Forest, Gradient Boosting, LightGBM and CatBoost. The evaluation on the 2023-24 validation set demonstrates that tree-based gradient-boosted models outperform traditional linear baselines. Specifically, CatBoost achieved the highest overall fit, yielding a Mean Absolute Error (MAE) of 2.06 PPG, a Root Mean Squared Error (RMSE) of 2.59 PPG, and a coefficient of determination $R^2$ of 0.849, while Random Forest achieved the lowest MAE of 2.05 PPG. The robust predictive results of the model show that combining age-related improvement and decline with past performance trends can be useful to estimate future player performance. This approach could therefore help professional franchises in decisions related to roster construction and player contract evaluation, even if further analyses would probably be needed to confirm the reliability of the model in different contexts.
+In recent years, sports analytics has undergone a major revolution driven by the application of machine learning to optimize decision-making for coaches, scouts, and front offices. While the literature has heavily focused on team-level game outcome prediction or collective efficiency, accurately forecasting individual player trajectories on a seasonal scale remains a complex challenge. This short paper introduces a supervised machine learning framework to predict future offensive productivity—expressed as points per game (PPG) in the subsequent season—for National Basketball Association (NBA) players. The proposed dataset integrates anthropometric features (age, height, distance from the estimated athletic peak age of 27) with traditional in-game statistics, advanced metrics (e.g., True Shooting Percentage, Usage Rate, Net Rating), and historical career trends (lag features, a 3-season PPG slope, and career longevity). We implemented and compared several regression models: Linear Regression, Random Forest, Gradient Boosting, LightGBM and CatBoost. The evaluation on the 2023-24 validation set demonstrates that tree-based gradient-boosted models outperform traditional linear baselines. Specifically, CatBoost achieved the highest overall fit, yielding a Mean Absolute Error (MAE) of 2.06 PPG, a Root Mean Squared Error (RMSE) of 2.59 PPG, and a coefficient of determination $R^2$ of 0.849, while Random Forest achieved the lowest MAE of 2.05 PPG. The robust predictive results of the model show that combining age-related improvement and decline with past performance trends can be useful to estimate future player performance. This approach could therefore help professional franchises in decisions related to roster construction and player contract evaluation, even if further analyses would probably be needed to confirm the reliability of the model in different contexts.
 
 \section{Introduction and Problem description}
 
@@ -57,13 +57,13 @@ Evaluating and predicting player performance is crucial for roster management, d
 However, predicting individual performance trajectories over a seasonal horizon is a complex task. Unlike single-game forecasting, which is heavily influenced by immediate contextual factors (e.g., matchups, travel fatigue, home-court advantage), seasonal forecasting must capture long-term physiological changes, career development trends, and systemic shifts in team roles. 
 
 \subsection{Problem Formulation}
-We formulate our predictive task as a supervised regression problem aimed at forecasting the seasonal scoring productivity of NBA players. Specifically, the objective is to predict a player's average points per game (PPG) in the upcoming season based on their profile during the current season. Instead of relying on a single, isolated performance indicator, our approach structures each player's profile by combining multiple historical, performance-based, and physical attributes. 
+We formulate our predictive task as a supervised regression problem aimed at forecasting the seasonal scoring productivity of NBA players. Specifically, the objective is to predict a player's average points per game (PPG) in the upcoming season based on their profile during the current and past seasons. Instead of relying on a single, isolated performance indicator, our approach structures each player's profile by combining multiple historical, performance-based, and physical attributes. 
 
 The predictive models are trained on historical player-season data to learn the relationship between these multi-dimensional player profiles and their subsequent scoring outputs. To evaluate and validate model performance, the discrepancy between the predicted scoring averages and the actual results is measured using standard regression metrics, primarily Mean Absolute Error (MAE) and Root Mean Squared Error (RMSE). The final goal is to construct a generalizable framework that minimizes these prediction errors on unseen validation seasons.
 
 To capture the diverse factors influencing a player's future scoring trajectory, the input features are organized into three primary domains:
 \begin{itemize}
-    \item \textbf{Biometric and Anthropometric Characteristics:} Features such as height, age, and a calculated distance from the theoretical athletic peak.
+    \item \textbf{Anthropometric Characteristics:} Features such as height, age, and a calculated distance from the theoretical athletic peak.
     \item \textbf{Current-Season Performance Metrics:} A combination of traditional statistics (e.g., minutes per game, rebounds, assists) and advanced efficiency ratings (e.g., True Shooting percentage, Usage Rate, Net Rating).
     \item \textbf{Historical Career Context (Lag Features \& Momentum):} Lagged metrics from prior seasons ($s-1$ and $s-2$), career longevity (number of seasons played), and a linear regression slope capturing the momentum of the player's scoring trajectory over the preceding three years.
 \end{itemize}
@@ -71,7 +71,7 @@ To capture the diverse factors influencing a player's future scoring trajectory,
 \subsection{Challenges in Seasonal Performance Forecasting}
 Predicting player performance from one season to the next presents unique statistical and biological challenges:
 \begin{itemize}
-    \item \textbf{The Aging Curve and Athletic Peak:} Athletic performance does not follow a linear trajectory. Physiological research indicates that professional basketball players generally reach their physical and athletic peak around the age of 27. Prior to this peak, players undergo physical maturation and skill development; after the peak, they experience progressive physical decline, which is often partially offset by increased tactical experience. Modeling this non-linear relationship is crucial for predicting long-term trajectories.
+    \item \textbf{The Aging Curve and Athletic Peak:} Athletic performance does not follow a linear trajectory. Generally professional basketball players generally reach their physical and athletic peak around the age of 27. Prior to this peak, players undergo physical maturation and skill development; after the peak, they experience progressive physical decline, which is often partially offset by increased tactical experience. Modeling this non-linear relationship is crucial for predicting long-term trajectories.
     \item \textbf{Mid-Season Transfers and Contextual Noise:} Professional players are frequently traded mid-season, resulting in multiple box-score entries with different teams. Averaging these statistics "raw" would ignore differences in playing time and game count, leading to data distortion. The data pipeline must apply weighted averages based on Games Played (GP) to maintain statistical integrity.
     \item \textbf{Injury and Outlier Filtering:} Severe injuries introduce massive noise into seasonal data. A player who suffers a season-ending injury in season $s+1$ will have an artificially low PPG that does not reflect their true performance capacity. Similarly, rookie players lack prior statistical history. The model must handle missing past data (\textit{NaN} values) through robust imputation (cloning current rookie values to simulate initial baselines) and filter out heavily injured players by enforcing minimum game and playing-time thresholds (e.g., minimum of 12 games and 120 minutes in the current season, and 20 games in the predicted season).
 \end{itemize}
@@ -98,16 +98,16 @@ At the team level, predicting match outcomes is a well-studied problem. A study 
 
 In addition to game outcome prediction, modeling overall team efficiency has been explored to guide tactical decisions. Nousher~\cite{Nousher} compared Random Forest, Decision Tree, and Linear Regression models to evaluate basketball team efficiency and player efficiency ratings in the NBA. By leveraging historical team-level performance factors, their study highlighted that while ensemble models provide robust generalization, linear regression baselines can establish highly accurate and interpretable benchmarks when predicting overall team efficiency metrics. 
 
-At the individual player level, the literature has explored both short-term and long-term performance forecasting. Chakrabarti~\cite{Chakrabarti} focused on short-term forecasting by predicting the number of points scored by a specific player in an upcoming individual game. Using Linear Regression, Neural Networks, Decision Trees, and Random Forests, the study introduced a Multiplicative Weight Update Algorithm (MWUA) to combine model predictions dynamically. Their findings indicated that while individual game performance is highly volatile, machine learning ensembles can successfully capture player scoring patterns.
+At the individual player level, the literature has explored both short-term and long-term performance forecasting. Chakrabarti~\cite{Chakrabarti} focused on short-term forecasting by predicting the number of points scored by a specific player in an upcoming individual game. Using Linear Regression, Neural Networks, Decision Trees, and Random Forests, the study introduced a Multiplicative Weight Update Algorithm (MWUA) to combine model predictions dynamically. Its findings indicated that while individual game performance is highly volatile, machine learning ensembles can successfully capture player scoring patterns.
 
 On a seasonal scale, player-level performance and popularity have been modeled to support long-term franchise strategy. Nguyen et al.~\cite{Nguyen} investigated the application of machine learning and deep learning to predict both the long-term performance (measured through Win Shares) and the popularity (measured through All-Star game selection) of NBA players. Their comparative analysis showed that traditional machine learning algorithms, such as Random Forests, often outperform deep learning models on structured, relatively small sports datasets due to the risk of overfitting in deep networks. Crucially, their study identified scoring metrics as the most significant contributor to both performance evaluation and fan-driven popularity.
 
-Despite these advancements, a gap remains in integrating biometric and physical characteristics with historical performance metrics to forecast player trajectory. While existing works focus either on short-term game-level points~\cite{Chakrabarti}, team-level outcomes~\cite{Panagiotis}, or general seasonal success indexes~\cite{Nguyen}, our proposed framework directly addresses the long-term prediction of season-long PPG. By combining biometric data (such as age, height, and distance from athletic peak) with historical performance lag features and multi-season momentum, this study bridges the gap between anthropometric evaluation and sports performance forecasting.
+Despite these advancements, a gap remains in integrating biometric and physical characteristics with historical performance metrics to forecast player trajectory. While existing works focus either on short-term game-level points~\cite{Chakrabarti}, team-level outcomes~\cite{Panagiotis}, or general seasonal success indexes~\cite{Nguyen}, our proposed framework directly addresses the long-term prediction of season-long PPG. By combining anthropometric data (such as age, height, and distance from athletic peak) with historical performance lag features and multi-season momentum, this study bridges the gap between anthropometric evaluation and sports performance forecasting.
 
 \section{Proposed Solution}
 
 
-The proposed system consists of a machine learning pipeline written in Python. It aggregates player performance and biological data from multiple sources, processes and engineers features to capture player trajectories, and compares multiple regression models—including tree-based boosters—to forecast next-season scoring output. 
+The proposed system consists of a machine learning pipeline written in Python. It aggregates player performance and anthropometric data from multiple sources, processes and engineers features to capture player trajectories, and compares multiple regression models—including tree-based boosters—to forecast next-season scoring output. 
 
 \subsection{Data Integration and Preprocessing}
 The data is retrieved from three distinct CSV tables categorized by season: scoring statistics, biometric data, and traditional game statistics. The data integration pipeline executes the following steps:
@@ -140,11 +140,9 @@ The processed dataset is split chronologically: all historical player-seasons up
     \item \textbf{Random Forest:} An ensemble of decision trees trained with default scikit-learn parameters.
     \item \textbf{Tuned Gradient Boosting Regressor:} A gradient booster configured with 200 estimators, a learning rate of 0.03, and a maximum tree depth of 4.
     \item \textbf{Tuned LightGBM Regressor:} A light gradient booster configured with 300 estimators, a learning rate of 0.03, a maximum depth of 3, and 20 leaves.
-    \item \textbf{CatBoost Regressor:} An out-of-the-box CatBoost regressor designed to handle tabular features with high efficiency.
+    \item \textbf{CatBoost Regressor:} A CatBoost regressor designed to handle tabular features with high efficiency.
 \end{enumerate}
-The performance of these models is validated globally and tested on randomly selected individual players.
-
-Both the Gradient Boosting Regressor and LightGBM were tuned utilizing GridSearchCV, which was employed to identify the optimal combination of hyperparameters from a predefined search grid.
+Both the Gradient Boosting Regressor and LightGBM were tuned using GridSearchCV, which was employed to identify the optimal combination of hyperparameters from a predefined search grid. The performance of these models is validated globally and tested on randomly selected individual players.
 
 \section{Results}
 
@@ -152,7 +150,7 @@ In this section, we present the quantitative evaluation of the five regression m
 
 To contextualize the accuracy of the models, we first compute the standard deviation of the target variable ($NEXT\_PPG$) in the validation set, which stands at 6.66 PPG. This standard deviation serves as a baseline indicator of the inherent variability in scoring outputs across NBA players. 
 
-The performance of each model was evaluated using four standard metrics: Mean Absolute Error (MAE), Root Mean Squared Error (RMSE), the coefficient of determination ($R^2$), and Global Accuracy (calculated as 100 minus the Weighted Mean Absolute Percentage Error, WMAPE). The results are summarized in Table~\ref{tab:results}.
+The performance of each model was evaluated using four standard metrics: Mean Absolute Error (MAE), Root Mean Squared Error (RMSE), the coefficient of determination ($R^2$), and Global Accuracy (calculated as 100 minus the Weighted Mean Absolute Percentage Error, WMAPE). The results are summarized in Table~\ref{tab:results}, while a direct graphical comparison of the performance metrics across all models is presented in Figure~\ref{fig:model_comparison_metrics}.
 
 \begin{table}[htbp]
 \caption{Model Performance Evaluation on the 2023-24 Validation Set}
@@ -175,14 +173,23 @@ CatBoost & 2.06 & 2.59 & 0.849 & 81.5\% \\
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=\columnwidth]{actual_vs_predicted.png}
-\caption{Actual versus predicted next-season PPG for CatBoost on the 2023-24 validation set. The dashed red diagonal line represents perfect predictions ($y=x$).}
-\label{fig:actual_vs_predicted}
+\includegraphics[width=\columnwidth]{model_comparison_metrics.png}
+\caption{Visual comparison of performance metrics (MAE, RMSE, $R^2$, and Global Accuracy) across the five evaluated regression models.}
+\label{fig:model_comparison_metrics}
 \end{figure}
 
-The experimental results show that all five models exhibit strong predictive performance, with Mean Absolute Errors ranging between 2.05 and 2.08 PPG. This means that, on average, the models predict a player's next-season scoring average to within approximately two points of their actual outcome.
+As illustrated in the comparative analysis in Figure~\ref{fig:model_comparison_metrics}, all five evaluated regressors exhibit highly competitive and robust predictive performance. The Mean Absolute Errors (MAE) are tightly grouped between 2.05 and 2.08 PPG (Figure~\ref{fig:model_comparison_metrics}), indicating that on average, every model can forecast a player's scoring average to within approximately two points. 
 
-CatBoost achieved the highest overall fit, yielding the lowest RMSE of 2.59 PPG and the highest coefficient of determination ($R^2 = 0.849$), indicating that it explains 84.9\% of the variance in next-season player scoring. The Random Forest model achieved the lowest Mean Absolute Error (MAE = 2.05 PPG) and tied with Tuned Gradient Boosting for the highest Global Accuracy (81.6\%). Notably, the baseline Linear Regression model performed competitively, yielding an MAE of 2.08 PPG and an $R^2$ of 0.847. This strong baseline performance suggests that the engineered biometric, lag, and career momentum features are highly informative and linearly aligned with the target variable, reducing the marginal gain of complex non-linear models.
+Specifically, as detailed in Table~\ref{tab:results} and shown in Figure~\ref{fig:model_comparison_metrics}, the CatBoost regressor achieves the highest overall statistical fit, yielding the lowest RMSE of 2.59 PPG and the highest coefficient of determination ($R^2 = 0.849$, or 84.9\% of explained variance). Random Forest yields the lowest absolute error (MAE = 2.05 PPG) and, along with Gradient Boosting, achieves the highest Global Accuracy of 81.6\%. The baseline Linear Regression model remains highly competitive ($R^2 = 0.847$), indicating a strong linear component in the engineered features.
+
+To examine the prediction behavior across different scoring tiers and analyze the regression-to-the-mean phenomenon, we plot the actual versus predicted values in Figure~\ref{fig:model_regression_fits}. For all five models, the scatter plots display a tight clustering around the ideal $y=x$ diagonal line. However, the fitted linear regression lines (shown in red) all exhibit a slope $m < 1.0$, ranging from $m = 0.77$ for Random Forest to $m = 0.85$ for Linear Regression. This slope deviation visually demonstrates the shrinkage effect: the models systematically overpredict low-scoring players (pulling them up towards the mean) and underpredict high-scoring outliers (pulling them down), which is a classic manifestation of statistical regression to the mean in sporting performance.
+
+\begin{figure*}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{model_regression_fits.png}
+\caption{Actual versus predicted next-season PPG with linear regression fits across the five models. The dashed grey diagonal line represents perfect predictions ($y=x$), while the red line represents the fitted linear trend of the predictions.}
+\label{fig:model_regression_fits}
+\end{figure*}
 
 
 \section{Results discussion}
@@ -190,7 +197,7 @@ CatBoost achieved the highest overall fit, yielding the lowest RMSE of 2.59 PPG 
 The experimental findings demonstrate that predicting individual seasonal scoring output is highly feasible when combining current-season performance, biometric parameters, and historical career trends. The fact that all models achieved a Mean Absolute Error of approximately 2.05--2.08 PPG against a target standard deviation of 6.66 PPG indicates that the engineered features successfully capture the underlying drivers of player scoring trajectories.
 
 \subsection{Biometrics and the Physiological Aging Curve}
-One of the key contributions of the proposed system is the integration of biometric data, specifically age and the biological distance to the athletic peak (\textit{PEAK\_AGE\_DIST}), which is established at 27 years. In sports biology, age-related performance curves are highly non-linear. By providing the model with both chronological age and the absolute distance to the peak age, tree-based models can segment players into distinct developmental phases:
+One of the key contributions of the proposed system is the integration of biometric data, specifically age and the biological distance to the athletic peak (\textit{PEAK\_AGE\_DIST}), which is established at 27 years. In sports biology, age-related performance curves are highly non-linear. By providing the model with both chronological age and the absolute distance to the peak age, tree-based models can segment players into distinct developmental phases (Figure \ref{fig:aging_curve}):
 \begin{itemize}
     \item \textbf{Maturation Phase:} Younger players (e.g., aged 19--24) who show high usage and positive momentum are likely to see an increase in PPG as they approach their physical peak.
     \item \textbf{Peak Phase:} Players near 27 years of age exhibit stable performance with high durability, sustaining high scoring outputs.
@@ -201,7 +208,7 @@ This biometric integration enables the model to distinguish between two players 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\columnwidth]{aging_curve.png}
-\caption{NBA players' average PPG as a function of age across the entire dataset. The dashed black line represents the estimated athletic peak age of 27.}
+\caption{NBA players average PPG as a function of age across the entire dataset. The dashed black line represents the estimated athletic peak age of 27.}
 \label{fig:aging_curve}
 \end{figure}
 
@@ -211,20 +218,28 @@ The inclusion of career momentum (\textit{PPG\_MOMENTUM}) and lag features provi
 Furthermore, historical lag features like \textit{PREV\_PPG} and \textit{PREV\_PPG\_2} act as regularizers. They prevent the model from overreacting to single-season outliers, such as a player having an exceptional shooting year or a temporary drop in production due to minor injuries or system adjustments.
 
 \subsection{Linear vs. Non-Linear Modeling Trade-offs}
-A notable finding is the highly competitive performance of the baseline Linear Regression model ($R^2 = 0.847$), which performs only slightly below CatBoost ($R^2 = 0.849$). This suggests that the relationship between a player's current-season statistics (such as usage rate, playing time, and scoring) and their future output is predominantly linear. 
+A notable finding of this study is the highly competitive performance of the baseline Linear Regression model ($R^2 = 0.847$), which performs only marginally below the top-performing CatBoost model ($R^2 = 0.849$). This indicates that the primary drivers of future scoring, such as current PPG and usage rate, share a strong linear relationship with the target variable. 
 
-However, tree-based models like CatBoost and Random Forest still yield marginal improvements because they can capture complex interaction effects that a standard linear model ignores. For example, a high usage rate (\textit{USG\%}) typically leads to higher scoring, but this relationship is mediated by minutes played (\textit{MPG}) and shooting efficiency (\textit{TS\%}). Tree-based models naturally partition the feature space to model these synergistic interactions (e.g., high usage is only sustainable and productive when accompanied by high true shooting efficiency).
+Nonetheless, non-linear tree-based models like CatBoost and Random Forest capture critical local interactions that linear regression is structurally blind to. The relative feature importances depicted in Figure~\ref{fig:feature_importance} show that while current points (\textit{PPG}) and age (\textit{AGE}) dominate the decision splits, factors such as usage (\textit{USG\%}) and shooting efficiency (\textit{TS\%}) play vital secondary roles. In tree-based models, these features are combined non-linearly: for instance, a high usage rate only projects high future scoring if accompanied by a high shooting efficiency, a conditional interaction that the linear baseline can only approximate.
+
+This modeling distinction is clearly visible in the regression curves plotted in Figure~\ref{fig:model_regression_curves}. Here, we compare the models' projected future PPG against a player's current-season PPG. The Linear Regression model is constrained to a straight line of constant slope. In contrast, the curves for CatBoost, LightGBM, and Random Forest exhibit a distinct downward curvature at high PPG values, closely matching the actual data trend (dashed black line). This curvature represents a key sports science reality: players averaging extreme scoring figures (e.g., above 25 PPG) are statistically expected to experience a drop-off in the subsequent season due to fatigue, roster changes, or defensive adaptations. By bending downwards, the tree-based models successfully capture this non-linear regression to the mean, whereas the linear model overpredicts extreme scorers.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth]{model_regression_curves.png}
+\caption{Regression curves (degree 2) of the five predictive models compared with the actual trend (dashed black line) in relation to the current season points per game (PPG).}
+\label{fig:model_regression_curves}
+\end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\columnwidth]{feature_importance.png}
-\caption{Relative feature importances of the CatBoost regressor, highlighting the significance of current-season points, minutes played, and historical lag statistics.}
+\caption{Relative feature importances of the CatBoost regressor, highlighting the significance of current-season points, age, and historical lag statistics.}
 \label{fig:feature_importance}
 \end{figure}
 
 \subsection{Limitations}
 While the proposed framework demonstrates robust predictive accuracy, several limitations must be acknowledged. The current model relies entirely on individual box-score metrics and biometrics, thereby ignoring broader team-level contextual shifts. Factors such as changes in coaching staff, team tactical systems, or roster modifications—such as a star teammate leaving or joining, which can drastically alter a player's usage and role—are not captured. Future work could address these limitations by integrating team-level variables or graph-based teammate representations to capture these complex contextual dynamics.
-
 
 \section{Conclusions}
 In this paper, we presented a supervised machine learning framework to forecast individual player scoring trajectories in the NBA on a seasonal horizon. By combining physical and biometric data with historical game performance and career momentum, the proposed pipeline models both the biological development of athletes and their tactical roles. 
